@@ -19,20 +19,12 @@ const initApi = () => {
 /*
  * @desc accepts msg String
  */
-const prepareMessage = (api, msg) => {
+const prepareMessage = (api, msg = '') => {
   return new Promise((resolve, reject) => {
-    api.getThreadInfo(threadID, (err, res) => {
-      if (err) reject(err);
-
-      let msgToSend = {
-        body: '\u200e' + tag,
-        mentions: [],
-      };
-      res.participantIDs.map((id) => {
-        if (id !== fbID) msgToSend.mentions.push({ tag, id });
-      });
-      resolve(msgToSend);
-    });
+    let msgToSend = {
+      body: msg ? '\n' + msg : '',
+    };
+    resolve(msgToSend);
   });
 };
 
@@ -81,27 +73,31 @@ const formatTasks = (tasks, newTasksId) => {
 
 const app = async () => {
   let now = await getTasks();
-  if (tasks.toString() !== now.toString()) {
-    let taskIds = tasks.map((task) => task.id);
+  if (JSON.stringify(tasks) !== JSON.stringify(now)) {
     let newTasks = [];
     now.map((task) => {
-      if (!taskIds.includes(task.id)) {
+      if (
+        !tasks
+          .map((task) => JSON.stringify(task))
+          .includes(JSON.stringify(task))
+      ) {
         newTasks.push(task);
       }
     });
-    if (!newTasks.length) return;
     let message = formatTasks(
       now,
       newTasks.map((task) => task.id)
     );
-    tasks = now;
     console.log(newTasks);
     const api = await initApi();
-    let msg = await prepareMessage(api, 'Test');
-    msg.body += message;
+    const customMessage = newTasks.length
+      ? '❗ ' + newTasks.length + ' tasks are created/changed.\n'
+      : '🎉 ' + (tasks.length - now.length) + ' tasks are done!\n';
+    let msg = await prepareMessage(api, customMessage + message);
     if (!isStart) {
       await sendMessage(api, msg);
     }
+    tasks = now;
     isStart = false;
   } else {
     console.log('no change');
