@@ -1,11 +1,14 @@
 const login = require('facebook-chat-api');
 const { Ticktick } = require('./utils');
 require('dotenv').config();
+const ticktick = new Ticktick();
 
 const { FACEBOOK_FB_ID: fbID, FACEBOOK_THREAD_ID: threadID } = process.env;
 const tag = '@everyone';
 const appState = JSON.parse(process.env.FACEBOOK_STATE);
+const ticktickAppState = JSON.parse(process.env.TICKTICK_STATE);
 let tasks = [];
+let isStart = true;
 
 const initApi = () => {
   return new Promise((resolve, reject) => {
@@ -96,19 +99,16 @@ const app = async () => {
     const api = await initApi();
     let msg = await prepareMessage(api, 'Test');
     msg.body += message;
-    await sendMessage(api, msg);
+    if (!isStart) {
+      await sendMessage(api, msg);
+    }
+    isStart = false;
   } else {
     console.log('no change');
   }
 };
 
 const getTasks = async () => {
-  const ticktick = new Ticktick();
-  await ticktick.login({
-    username: process.env.TICKTICK_USERNAME,
-    password: process.env.TICKTICK_PASSWORD,
-  });
-  console.log(process.env.TICKTICK_PROJECT);
   let tasks = await ticktick.getTasks({
     name: process.env.TICKTICK_PROJECT,
     status: 0,
@@ -116,6 +116,16 @@ const getTasks = async () => {
   return tasks;
 };
 
-setInterval(() => {
-  app();
-}, 10000);
+const temp = async () => {
+  await ticktick.login({
+    // username: process.env.TICKTICK_USERNAME,
+    // password: process.env.TICKTICK_PASSWORD,
+    appState: ticktickAppState,
+  });
+
+  setInterval(() => {
+    app();
+  }, 5000);
+};
+
+temp();

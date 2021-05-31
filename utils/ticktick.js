@@ -10,7 +10,12 @@ module.exports = class TickTickAPI {
    * @param {string} credentials.username
    * @param {string} credentials.password
    */
-  async login({ username, password }) {
+  async login({ username, password, appState }) {
+    if (appState) {
+      this.cookies = appState.cookies;
+      this.cookieHeader = appState.cookieHeader;
+      return;
+    }
     const url =
       'https://api.ticktick.com/api/v2/user/signon?wc=true&remember=true';
 
@@ -29,10 +34,18 @@ module.exports = class TickTickAPI {
         password: password,
       },
     };
-    const result = await axios(options);
+
+    let result;
+    try {
+      result = await axios(options);
+    } catch (err) {
+      throw err;
+    }
 
     this.cookies = result.headers['set-cookie'];
     this.cookieHeader = this.cookies.join('; ') + ';';
+
+    console.log(JSON.stringify(this));
 
     return result;
   }
