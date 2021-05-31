@@ -1,10 +1,8 @@
-const fs = require('fs');
 const login = require('facebook-chat-api');
-const Ticktick = require('ticktick-node-api');
+const { Ticktick } = require('./utils');
 require('dotenv').config();
 
-const threadID = '100004742591360';
-const fbID = '100002769213731';
+const { FACEBOOK_FB_ID: fbID, FACEBOOK_THREAD_ID: threadID } = process.env;
 const tag = '@everyone';
 const appState = JSON.parse(process.env.FACEBOOK_STATE);
 let tasks = [];
@@ -110,9 +108,9 @@ const getTasks = async () => {
     username: process.env.TICKTICK_USERNAME,
     password: process.env.TICKTICK_PASSWORD,
   });
-  console.log(ticktick);
+  console.log(process.env.TICKTICK_PROJECT);
   let tasks = await ticktick.getTasks({
-    name: 'BS CpE 3-6',
+    name: process.env.TICKTICK_PROJECT,
     status: 0,
   });
   return tasks;
